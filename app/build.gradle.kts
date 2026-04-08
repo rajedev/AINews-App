@@ -1,9 +1,15 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.hilt.android)
     alias(libs.plugins.ksp)
+}
+
+val localProperties = Properties().apply {
+    rootProject.file("local.properties").takeIf { it.exists() }?.inputStream()?.use { load(it) }
 }
 
 android {
@@ -24,7 +30,8 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
         buildConfigField("String", "BASE_URL", "\"https://newsdata.io/\"")
-        buildConfigField("String", "API_KEY", "\"pub_566c1551fa104d44b3d8abc3200ebb8e\"")
+        buildConfigField("String", "API_KEY", "\"${localProperties["NEWS_API_KEY"] ?: ""}\"")
+
     }
 
     buildTypes {
