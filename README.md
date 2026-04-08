@@ -2,6 +2,12 @@
 
 A clean, modern Android news reader app built with Kotlin and Jetpack Compose. Fetches AI-related news from the [NewsData.io](https://newsdata.io) API and presents them in a polished, Material 3 UI.
 > *Built as a personal practice project + using [Claude Code](https://claude.ai/code).*
+## Screens
+
+|               Feed               |                Detail                |                In-app Reader                 |                External Browser                |
+|:--------------------------------:|:------------------------------------:|:--------------------------------------------:|:----------------------------------------------:|
+| ![Feed](screens/1_feed_list.png) | ![Detail](screens/2_feed_detail.png) | ![In-app WebView](screens/3_feed_int_wv.png) | ![External WebView](screens/4_feed_ext_wv.png) |
+
 ## Features
 
 - **News Feed** — Browse the latest articles with thumbnails, titles, and previews
