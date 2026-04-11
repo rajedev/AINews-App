@@ -69,4 +69,9 @@ app/
 - **Pagination** — Infinite scroll with page-based loading to browse more articles beyond the initial fetch
 - **Local cache** — Store fetched articles in a Room database so the feed loads instantly and works fully offline; invalidate stale cache on refresh
 
+## References
+1. [skills mp](https://skillsmp.com/)
+2. [NewsData.io API docs](https://newsdata.io/docs)
+3. [Anthropic Skills](https://github.com/anthropics/skills)
+
 ---

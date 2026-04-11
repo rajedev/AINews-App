@@ -10,6 +10,7 @@ triggers:
   - /android-code-review
   - review this MR
   - do a code review
+allowed_tools: Read, Grep, Glob 
 ---
 
 # Android Code Review
