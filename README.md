@@ -22,16 +22,16 @@ A clean, modern Android AI News Feed App built with Kotlin and Jetpack Compose. 
 
 ## Tech Stack
 
-| Layer | Technology |
-|---|---|
-| Language | Kotlin |
-| UI | Jetpack Compose + Material 3 |
-| Architecture | MVVM + Clean Architecture |
-| DI | Hilt |
-| Navigation | Navigation 3 (nav3) |
-| Networking | Retrofit + OkHttp + kotlinx.serialization |
-| Image Loading | Coil |
-| Async | Coroutines + Flow |
+| Layer         | Technology                                |
+|---------------|-------------------------------------------|
+| Language      | Kotlin                                    |
+| UI            | Jetpack Compose + Material 3              |
+| Architecture  | MVVM + Clean Architecture                 |
+| DI            | Hilt                                      |
+| Navigation    | Navigation 3 (nav3)                       |
+| Networking    | Retrofit + OkHttp + kotlinx.serialization |
+| Image Loading | Coil                                      |
+| Async         | Coroutines + Flow                         |
 
 ## Architecture
 
@@ -70,8 +70,9 @@ app/
 - **Local cache** — Store fetched articles in a Room database so the feed loads instantly and works fully offline; invalidate stale cache on refresh
 
 ## References
-1. [skills mp](https://skillsmp.com/)
-2. [NewsData.io API docs](https://newsdata.io/docs)
-3. [Anthropic Skills](https://github.com/anthropics/skills)
+1. [Skills Marketplace](https://skillsmp.com/)
+2. [Smithery](https://smithery.ai/)
+3. [NewsData.io API docs](https://newsdata.io/docs)
+4. [Anthropic Skills](https://github.com/anthropics/skills)
 
 ---

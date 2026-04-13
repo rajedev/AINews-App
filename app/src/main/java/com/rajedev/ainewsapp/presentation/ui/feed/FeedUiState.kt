@@ -8,4 +8,5 @@ data class FeedUiState(
     val articles: List<Article> = emptyList(),
     val isLoading: Boolean = false,
     val isFallback: Boolean = false,
+    val isRefreshing: Boolean = false,
 )

@@ -31,15 +31,26 @@ class FeedViewModel @Inject constructor(
 
     private fun loadNews() {
         viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true) }
-            val result = getNewsUseCase()
-            _uiState.update {
-                it.copy(
-                    articles = result.articles,
-                    isFallback = result.isFallback,
-                    isLoading = false,
-                )
+            val hasArticles = _uiState.value.articles.isNotEmpty()
+            if (hasArticles) {
+                _uiState.update { it.copy(isRefreshing = true) }
+            } else {
+                _uiState.update { it.copy(isLoading = true) }
             }
+            runCatching { getNewsUseCase() }
+                .onSuccess { result ->
+                    _uiState.update {
+                        it.copy(
+                            articles = result.articles,
+                            isFallback = result.isFallback,
+                            isLoading = false,
+                            isRefreshing = false,
+                        )
+                    }
+                }
+                .onFailure {
+                    _uiState.update { it.copy(isLoading = false, isRefreshing = false) }
+                }
         }
     }
 }
