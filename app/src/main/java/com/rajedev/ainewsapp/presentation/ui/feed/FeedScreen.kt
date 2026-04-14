@@ -76,6 +76,19 @@ private fun FeedContent(
     onArticleClick: (Article) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val listState = rememberLazyListState()
+    val shouldLoadMore by remember {
+        derivedStateOf {
+            val lastVisible = listState.layoutInfo.visibleItemsInfo.lastOrNull()
+            val total = listState.layoutInfo.totalItemsCount
+            lastVisible != null && lastVisible.index >= total - 2
+        }
+    }
+    LaunchedEffect(shouldLoadMore) {
+        if (shouldLoadMore && uiState.hasMore && !uiState.isLoadingMore) {
+            onAction(FeedAction.LoadMoreNews)
+        }
+    }
     Scaffold(
         modifier = modifier,
         topBar = {
@@ -136,19 +149,6 @@ private fun FeedContent(
                         FallbackBanner(
                             modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
                         )
-                    }
-                    val listState = rememberLazyListState()
-                    val shouldLoadMore by remember {
-                        derivedStateOf {
-                            val lastVisible = listState.layoutInfo.visibleItemsInfo.lastOrNull()
-                            val total = listState.layoutInfo.totalItemsCount
-                            lastVisible != null && lastVisible.index >= total - 2 && !uiState.isLoadingMore
-                        }
-                    }
-                    LaunchedEffect(shouldLoadMore) {
-                        if (shouldLoadMore && uiState.hasMore) {
-                            onAction(FeedAction.LoadMoreNews)
-                        }
                     }
                     LazyColumn(
                         state = listState,

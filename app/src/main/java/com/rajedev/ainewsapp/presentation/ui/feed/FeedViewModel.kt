@@ -34,7 +34,10 @@ class FeedViewModel @Inject constructor(
 
     private fun loadMoreNews() {
         val currentNextPage = nextPage
-        if (currentNextPage == null || _uiState.value.isFallback || _uiState.value.isLoadingMore) return
+        if (currentNextPage == null
+            || _uiState.value.isFallback
+            || _uiState.value.isLoadingMore
+            || _uiState.value.isRefreshing) return
         viewModelScope.launch {
             _uiState.update { it.copy(isLoadingMore = true) }
             runCatching { getNewsUseCase(page = currentNextPage) }
