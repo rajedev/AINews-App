@@ -16,6 +16,7 @@ interface NewsApiService {
         @Query("category") category: String = "science,sports,technology,tourism,food",
         @Query("removeduplicate") removeDuplicate: Int = 1,
         @Query("excludefield") excludeField: String = EXCLUDED_FIELDS,
+        @Query("page") page: String? = null,
     ): NewsResponseDto
 
     companion object {

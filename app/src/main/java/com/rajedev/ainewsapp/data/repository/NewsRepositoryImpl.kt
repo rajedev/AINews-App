@@ -14,13 +14,12 @@ class NewsRepositoryImpl @Inject constructor(
     @Named("io") private val dispatcher: CoroutineDispatcher,
 ) : NewsRepository {
 
-    override suspend fun getLatestNews(): Result<List<Article>> =
+    override suspend fun getLatestNews(page: String?): Result<Pair<List<Article>, String?>> =
         withContext(dispatcher) {
             runCatching {
-                api.getLatestNews()
-                    .results
-                    .orEmpty()
-                    .map { it.toDomain() }
+                val response = api.getLatestNews(page = page)
+                val articles = response.results.orEmpty().map { it.toDomain() }
+                Pair(articles, response.nextPage)
             }
         }
 }

@@ -19,6 +19,8 @@ class FeedViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(FeedUiState())
     val uiState: StateFlow<FeedUiState> = _uiState.asStateFlow()
 
+    private var nextPage: String? = null
+
     init {
         onAction(FeedAction.LoadNews)
     }
@@ -26,6 +28,29 @@ class FeedViewModel @Inject constructor(
     fun onAction(action: FeedAction) {
         when (action) {
             FeedAction.LoadNews, FeedAction.Retry -> loadNews()
+            FeedAction.LoadMoreNews -> loadMoreNews()
+        }
+    }
+
+    private fun loadMoreNews() {
+        val currentNextPage = nextPage
+        if (currentNextPage == null || _uiState.value.isFallback || _uiState.value.isLoadingMore) return
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoadingMore = true) }
+            runCatching { getNewsUseCase(page = currentNextPage) }
+                .onSuccess { result ->
+                    nextPage = result.nextPage
+                    _uiState.update {
+                        it.copy(
+                            articles = it.articles + result.articles,
+                            hasMore = result.nextPage != null,
+                            isLoadingMore = false,
+                        )
+                    }
+                }
+                .onFailure {
+                    _uiState.update { it.copy(isLoadingMore = false) }
+                }
         }
     }
 
@@ -39,10 +64,12 @@ class FeedViewModel @Inject constructor(
             }
             runCatching { getNewsUseCase() }
                 .onSuccess { result ->
+                    nextPage = result.nextPage
                     _uiState.update {
                         it.copy(
                             articles = result.articles,
                             isFallback = result.isFallback,
+                            hasMore = result.nextPage != null,
                             isLoading = false,
                             isRefreshing = false,
                         )

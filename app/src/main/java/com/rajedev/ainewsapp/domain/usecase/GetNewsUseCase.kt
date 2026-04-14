@@ -7,10 +7,11 @@ class GetNewsUseCase @Inject constructor(
     private val repository: NewsRepository,
 ) {
 
-    suspend operator fun invoke(): NewsResult {
-        val result = repository.getLatestNews()
+    suspend operator fun invoke(page: String? = null): NewsResult {
+        val result = repository.getLatestNews(page)
         return if (result.isSuccess) {
-            NewsResult(articles = result.getOrThrow(), isFallback = false)
+            val (articles, nextPage) = result.getOrThrow()
+            NewsResult(articles = articles, isFallback = false, nextPage = nextPage)
         } else {
             NewsResult(articles = SampleArticles.list, isFallback = true)
         }

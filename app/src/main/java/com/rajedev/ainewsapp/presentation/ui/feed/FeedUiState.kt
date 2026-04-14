@@ -9,4 +9,6 @@ data class FeedUiState(
     val isLoading: Boolean = false,
     val isFallback: Boolean = false,
     val isRefreshing: Boolean = false,
+    val hasMore: Boolean = false,
+    val isLoadingMore: Boolean = false,
 )

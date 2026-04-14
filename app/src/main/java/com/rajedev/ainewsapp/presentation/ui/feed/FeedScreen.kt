@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Refresh
@@ -34,7 +35,10 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -82,7 +86,7 @@ private fun FeedContent(
                 actions = {
                     IconButton(
                         onClick = { onAction(FeedAction.LoadNews) },
-                        enabled = !uiState.isRefreshing,
+                        enabled = !uiState.isRefreshing && !uiState.isLoadingMore,
                     ) {
                         Icon(
                             imageVector = Icons.Default.Refresh,
@@ -133,7 +137,21 @@ private fun FeedContent(
                             modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
                         )
                     }
+                    val listState = rememberLazyListState()
+                    val shouldLoadMore by remember {
+                        derivedStateOf {
+                            val lastVisible = listState.layoutInfo.visibleItemsInfo.lastOrNull()
+                            val total = listState.layoutInfo.totalItemsCount
+                            lastVisible != null && lastVisible.index >= total - 2 && !uiState.isLoadingMore
+                        }
+                    }
+                    LaunchedEffect(shouldLoadMore) {
+                        if (shouldLoadMore && uiState.hasMore) {
+                            onAction(FeedAction.LoadMoreNews)
+                        }
+                    }
                     LazyColumn(
+                        state = listState,
                         contentPadding = PaddingValues(
                             top = 12.dp,
                             bottom = innerPadding.calculateBottomPadding() + 12.dp,
@@ -147,6 +165,18 @@ private fun FeedContent(
                                 article = article,
                                 onClick = { onArticleClick(article) },
                             )
+                        }
+                        if (uiState.isLoadingMore) {
+                            item(key = "load_more_indicator") {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(16.dp),
+                                    contentAlignment = Alignment.Center,
+                                ) {
+                                    CircularProgressIndicator(modifier = Modifier.size(28.dp))
+                                }
+                            }
                         }
                     }
                 }

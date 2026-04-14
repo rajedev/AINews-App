@@ -18,6 +18,8 @@ A clean, modern Android AI News Feed App built with Kotlin and Jetpack Compose. 
 - **Article Detail** — Full article view with category pills, publication date, and relative timestamps
 - **In-app Reader** — Read articles via an embedded WebView or open in an external browser
 - **Offline Fallback** — Sample articles shown when the network is unavailable
+- **Refresh** — Tap the refresh button in the top bar to reload the feed from the first page
+- **Pagination** — Infinite scroll with page-based loading; new articles append automatically as you reach the bottom of the list
 - **Smooth UX** — Loading states, animated transitions, and a gradient glass-card design
 
 ## Tech Stack
@@ -65,8 +67,9 @@ app/
 
 ## Future Enhancements
 
-- **Pull-to-refresh** — Swipe down on the feed to fetch the latest articles on demand
-- **Pagination** — Infinite scroll with page-based loading to browse more articles beyond the initial fetch
+- **Search & Filter** — Search articles by keyword or filter the feed by category
+- **Bookmarks** — Save articles locally with Room so users can read them later, even offline
+- **Dark mode** — System-aware dark/light theme using Material 3 dynamic color
 - **Local cache** — Store fetched articles in a Room database so the feed loads instantly and works fully offline; invalidate stale cache on refresh
 
 ## References
