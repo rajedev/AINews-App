@@ -2,7 +2,7 @@
 
 A clean, modern Android AI News Feed App built with Kotlin and Jetpack Compose. Fetches AI-related news from the [NewsData.io](https://newsdata.io) API and presents them in a polished, Material 3 UI.
 
-> <img src="https://cdn.prod.website-files.com/621f84dc15b5ed16dc85a18a/67cb0634bb09026ce5e49894_claude-code.webp" width="200" height = "200" /> 
+> <img src="https://cdn.prod.website-files.com/621f84dc15b5ed16dc85a18a/67cb0634bb09026ce5e49894_claude-code.webp" width="200" height = "200"  alt=""/> 
 
 > *Build this applicaiton as part of learning [Claude Code](https://claude.ai/code) features like Context Management (CLAUDE.md), Plan mode & Checkpoints, Skill, Hooks & Commands*
 
