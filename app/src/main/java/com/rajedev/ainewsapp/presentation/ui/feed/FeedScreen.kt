@@ -24,6 +24,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.outlined.WifiOff
+import androidx.compose.material3.BottomSheetScaffold
+import androidx.compose.material3.BottomSheetScaffoldState
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -34,20 +36,25 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.rememberBottomSheetScaffoldState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.launch
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.rajedev.ainewsapp.domain.model.Article
 import com.rajedev.ainewsapp.presentation.common.ArticleCard
 import com.rajedev.ainewsapp.presentation.common.DecorativeBlob
+import com.rajedev.ainewsapp.presentation.ui.detail.DetailScreen
 import com.rajedev.ainewsapp.ui.theme.Blue200
 import com.rajedev.ainewsapp.ui.theme.FeedGradientBackground
 import com.rajedev.ainewsapp.ui.theme.Indigo400
@@ -60,35 +67,10 @@ fun FeedScreen(
     viewModel: FeedViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    FeedContent(
-        uiState = uiState,
-        onAction = viewModel::onAction,
-        onArticleClick = onArticleClick,
-        modifier = modifier,
-    )
-}
+    val bottomSheetState = rememberBottomSheetScaffoldState()
+    val selectedArticle = remember { mutableStateOf<Article?>(null) }
+    val coroutineScope = rememberCoroutineScope()
 
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun FeedContent(
-    uiState: FeedUiState,
-    onAction: (FeedAction) -> Unit,
-    onArticleClick: (Article) -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    val listState = rememberLazyListState()
-    val shouldLoadMore by remember {
-        derivedStateOf {
-            val lastVisible = listState.layoutInfo.visibleItemsInfo.lastOrNull()
-            val total = listState.layoutInfo.totalItemsCount
-            lastVisible != null && lastVisible.index >= total - 2
-        }
-    }
-    LaunchedEffect(shouldLoadMore) {
-        if (shouldLoadMore && uiState.hasMore && !uiState.isLoadingMore) {
-            onAction(FeedAction.LoadMoreNews)
-        }
-    }
     Scaffold(
         modifier = modifier,
         topBar = {
@@ -98,7 +80,7 @@ private fun FeedContent(
                 },
                 actions = {
                     IconButton(
-                        onClick = { onAction(FeedAction.LoadNews) },
+                        onClick = { viewModel.onAction(FeedAction.LoadNews) },
                         enabled = !uiState.isRefreshing && !uiState.isLoadingMore,
                     ) {
                         Icon(
@@ -115,67 +97,119 @@ private fun FeedContent(
         },
         containerColor = Color.Transparent,
     ) { innerPadding ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(FeedGradientBackground),
-        ) {
-            DecorativeBlob(
-                color = Blue200,
-                modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .padding(top = 40.dp),
+        BottomSheetScaffold(
+            scaffoldState = bottomSheetState,
+            sheetPeekHeight = 0.dp,
+            sheetContent = {
+                if (selectedArticle.value != null) {
+                    DetailScreen(
+                        route = com.rajedev.ainewsapp.presentation.navigation.Route.ArticleDetail(article = selectedArticle.value!!),
+                        onBottomSheetDismissed = {
+                            coroutineScope.launch { bottomSheetState.bottomSheetState.hide() }
+                            selectedArticle.value = null
+                        },
+                    )
+                }
+            },
+        ) { bottomSheetInnerPadding ->
+            FeedContent(
+                uiState = uiState,
+                onAction = viewModel::onAction,
+                onArticleClick = { article ->
+                    selectedArticle.value = article
+                    coroutineScope.launch { bottomSheetState.bottomSheetState.expand() }
+                },
+                innerPadding = PaddingValues(
+                    top = innerPadding.calculateTopPadding(),
+                    bottom = bottomSheetInnerPadding.calculateBottomPadding(),
+                ),
             )
-            DecorativeBlob(
-                color = Indigo400,
-                modifier = Modifier
-                    .align(Alignment.BottomStart)
-                    .padding(bottom = 80.dp),
-            )
+        }
+    }
+}
 
-            if (uiState.isLoading) {
-                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
-            } else {
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(top = innerPadding.calculateTopPadding()),
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun FeedContent(
+    uiState: FeedUiState,
+    onAction: (FeedAction) -> Unit,
+    onArticleClick: (Article) -> Unit,
+    innerPadding: PaddingValues,
+    modifier: Modifier = Modifier,
+) {
+    val listState = rememberLazyListState()
+    val shouldLoadMore by remember {
+        derivedStateOf {
+            val lastVisible = listState.layoutInfo.visibleItemsInfo.lastOrNull()
+            val total = listState.layoutInfo.totalItemsCount
+            lastVisible != null && lastVisible.index >= total - 2
+        }
+    }
+    LaunchedEffect(shouldLoadMore) {
+        if (shouldLoadMore && uiState.hasMore && !uiState.isLoadingMore) {
+            onAction(FeedAction.LoadMoreNews)
+        }
+    }
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .background(FeedGradientBackground),
+    ) {
+        DecorativeBlob(
+            color = Blue200,
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .padding(top = 40.dp),
+        )
+        DecorativeBlob(
+            color = Indigo400,
+            modifier = Modifier
+                .align(Alignment.BottomStart)
+                .padding(bottom = 80.dp),
+        )
+
+        if (uiState.isLoading) {
+            CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+        } else {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(top = innerPadding.calculateTopPadding()),
+            ) {
+                AnimatedVisibility(
+                    visible = uiState.isFallback,
+                    enter = expandVertically() + fadeIn(),
+                    exit = shrinkVertically() + fadeOut(),
                 ) {
-                    AnimatedVisibility(
-                        visible = uiState.isFallback,
-                        enter = expandVertically() + fadeIn(),
-                        exit = shrinkVertically() + fadeOut(),
-                    ) {
-                        FallbackBanner(
-                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
+                    FallbackBanner(
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
+                    )
+                }
+                LazyColumn(
+                    state = listState,
+                    contentPadding = PaddingValues(
+                        top = 12.dp,
+                        bottom = innerPadding.calculateBottomPadding() + 12.dp,
+                        start = 16.dp,
+                        end = 16.dp,
+                    ),
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                ) {
+                    items(uiState.articles, key = { it.id }) { article ->
+                        ArticleCard(
+                            article = article,
+                            onClick = { onArticleClick(article) },
                         )
                     }
-                    LazyColumn(
-                        state = listState,
-                        contentPadding = PaddingValues(
-                            top = 12.dp,
-                            bottom = innerPadding.calculateBottomPadding() + 12.dp,
-                            start = 16.dp,
-                            end = 16.dp,
-                        ),
-                        verticalArrangement = Arrangement.spacedBy(16.dp),
-                    ) {
-                        items(uiState.articles, key = { it.id }) { article ->
-                            ArticleCard(
-                                article = article,
-                                onClick = { onArticleClick(article) },
-                            )
-                        }
-                        if (uiState.isLoadingMore) {
-                            item(key = "load_more_indicator") {
-                                Box(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(16.dp),
-                                    contentAlignment = Alignment.Center,
-                                ) {
-                                    CircularProgressIndicator(modifier = Modifier.size(28.dp))
-                                }
+                    if (uiState.isLoadingMore) {
+                        item(key = "load_more_indicator") {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(16.dp),
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                CircularProgressIndicator(modifier = Modifier.size(28.dp))
                             }
                         }
                     }

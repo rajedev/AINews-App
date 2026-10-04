@@ -24,21 +24,16 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.outlined.OpenInNew
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -59,25 +54,26 @@ import com.rajedev.ainewsapp.presentation.common.toRelativeTime
 import com.rajedev.ainewsapp.presentation.navigation.Route
 import com.rajedev.ainewsapp.ui.theme.FeedGradientBackground
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DetailScreen(
     route: Route.ArticleDetail,
-    onBack: () -> Unit,
+    onBottomSheetDismissed: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     val article = route.article
     val context = LocalContext.current
-    var isWebViewVisible by remember { mutableStateOf(false) }
+    val isWebViewVisible = remember { mutableStateOf(false) }
 
     DetailContent(
         article = article,
-        isWebViewVisible = isWebViewVisible,
-        onBack = onBack,
-        onToggleWebView = { isWebViewVisible = !isWebViewVisible },
+        isWebViewVisible = isWebViewVisible.value,
+        onToggleWebView = { isWebViewVisible.value = !isWebViewVisible.value },
         onOpenExternalBrowser = {
             val intent = Intent(Intent.ACTION_VIEW, article.link.toUri())
             context.startActivity(intent)
         },
+        onBottomSheetDismissed = onBottomSheetDismissed,
         modifier = modifier,
     )
 }
@@ -87,107 +83,79 @@ fun DetailScreen(
 private fun DetailContent(
     article: Article,
     isWebViewVisible: Boolean,
-    onBack: () -> Unit,
     onToggleWebView: () -> Unit,
     onOpenExternalBrowser: () -> Unit,
+    onBottomSheetDismissed: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
-    Scaffold(
-        modifier = modifier,
-        topBar = {
-            TopAppBar(
-                title = {
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .background(FeedGradientBackground),
+    ) {
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(
+                top = 0.dp,
+                bottom = 24.dp,
+            ),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            item {
+                AsyncImage(
+                    model = article.imageUrl?.ifEmpty { null },
+                    contentDescription = null,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(HERO_IMAGE_HEIGHT.dp),
+                )
+            }
+            item {
+                GlassCard(modifier = Modifier.padding(horizontal = 16.dp)) {
                     Text(
                         text = article.title,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        style = MaterialTheme.typography.titleMedium,
-                    )
-                },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back",
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color.White.copy(alpha = 0.85f),
-                ),
-            )
-        },
-        containerColor = Color.Transparent,
-    ) { innerPadding ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(FeedGradientBackground),
-        ) {
-            LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(
-                    top = innerPadding.calculateTopPadding(),
-                    bottom = innerPadding.calculateBottomPadding() + 24.dp,
-                ),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
-                item {
-                    AsyncImage(
-                        model = article.imageUrl?.ifEmpty { null },
-                        contentDescription = null,
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(HERO_IMAGE_HEIGHT.dp),
+                        style = MaterialTheme.typography.titleLarge.copy(
+                            fontWeight = FontWeight.Bold,
+                        ),
                     )
                 }
-                item {
-                    GlassCard(modifier = Modifier.padding(horizontal = 16.dp)) {
-                        Text(
-                            text = article.title,
-                            style = MaterialTheme.typography.titleLarge.copy(
-                                fontWeight = FontWeight.Bold,
-                            ),
-                        )
-                    }
+            }
+            item {
+                GlassCard(modifier = Modifier.padding(horizontal = 16.dp)) {
+                    Text(
+                        text = article.description,
+                        style = MaterialTheme.typography.bodyLarge,
+                    )
                 }
-                item {
-                    GlassCard(modifier = Modifier.padding(horizontal = 16.dp)) {
-                        Text(
-                            text = article.description,
-                            style = MaterialTheme.typography.bodyLarge,
-                        )
-                    }
-                }
-                item {
-                    MetaInfoCard(
-                        categories = article.categories,
-                        pubDate = article.pubDate,
+            }
+            item {
+                MetaInfoCard(
+                    categories = article.categories,
+                    pubDate = article.pubDate,
+                    modifier = Modifier.padding(horizontal = 16.dp),
+                )
+            }
+            item {
+                GradientButton(
+                    text = if (isWebViewVisible) "Close Article" else "Open Full Article",
+                    onClick = onToggleWebView,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp),
+                )
+            }
+            item {
+                AnimatedVisibility(
+                    visible = isWebViewVisible,
+                    enter = expandVertically() + fadeIn(),
+                    exit = shrinkVertically() + fadeOut(),
+                ) {
+                    ArticleWebView(
+                        url = article.link,
+                        onOpenExternal = onOpenExternalBrowser,
                         modifier = Modifier.padding(horizontal = 16.dp),
                     )
-                }
-                item {
-                    GradientButton(
-                        text = if (isWebViewVisible) "Close Article" else "Open Full Article",
-                        onClick = onToggleWebView,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp),
-                    )
-                }
-                item {
-                    AnimatedVisibility(
-                        visible = isWebViewVisible,
-                        enter = expandVertically() + fadeIn(),
-                        exit = shrinkVertically() + fadeOut(),
-                    ) {
-                        ArticleWebView(
-                            url = article.link,
-                            onOpenExternal = onOpenExternalBrowser,
-                            modifier = Modifier.padding(horizontal = 16.dp),
-                        )
-                    }
                 }
             }
         }
