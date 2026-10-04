@@ -1,8 +1,10 @@
 package com.rajedev.ainewsapp.domain.model
 
+import androidx.compose.runtime.Immutable
 import kotlinx.serialization.Serializable
 
 @Serializable
+@Immutable
 data class Article(
     val id: String,
     val link: String,

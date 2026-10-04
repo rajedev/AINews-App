@@ -48,12 +48,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.rajedev.ainewsapp.domain.model.Article
 import com.rajedev.ainewsapp.presentation.common.ArticleCard
 import com.rajedev.ainewsapp.presentation.common.DecorativeBlob
+import com.rajedev.ainewsapp.presentation.navigation.Route
 import com.rajedev.ainewsapp.presentation.ui.detail.DetailScreen
 import com.rajedev.ainewsapp.ui.theme.Blue200
 import com.rajedev.ainewsapp.ui.theme.FeedGradientBackground
@@ -101,11 +103,13 @@ fun FeedScreen(
             scaffoldState = bottomSheetState,
             sheetPeekHeight = 0.dp,
             sheetContent = {
-                if (selectedArticle.value != null) {
+                val currentArticle = selectedArticle.value
+                if (currentArticle != null) {
                     DetailScreen(
-                        route = com.rajedev.ainewsapp.presentation.navigation.Route.ArticleDetail(article = selectedArticle.value!!),
+                        route = Route.ArticleDetail(
+                            article = currentArticle
+                        ),
                         onBottomSheetDismissed = {
-                            coroutineScope.launch { bottomSheetState.bottomSheetState.hide() }
                             selectedArticle.value = null
                         },
                     )
@@ -117,12 +121,13 @@ fun FeedScreen(
                 onAction = viewModel::onAction,
                 onArticleClick = { article ->
                     selectedArticle.value = article
-                    coroutineScope.launch { bottomSheetState.bottomSheetState.expand() }
                 },
                 innerPadding = PaddingValues(
                     top = innerPadding.calculateTopPadding(),
                     bottom = bottomSheetInnerPadding.calculateBottomPadding(),
                 ),
+                bottomSheetState = bottomSheetState,
+                coroutineScope = coroutineScope
             )
         }
     }
@@ -136,6 +141,8 @@ private fun FeedContent(
     onArticleClick: (Article) -> Unit,
     innerPadding: PaddingValues,
     modifier: Modifier = Modifier,
+    bottomSheetState: BottomSheetScaffoldState,
+    coroutineScope: CoroutineScope,
 ) {
     val listState = rememberLazyListState()
     val shouldLoadMore by remember {
@@ -198,7 +205,10 @@ private fun FeedContent(
                     items(uiState.articles, key = { it.id }) { article ->
                         ArticleCard(
                             article = article,
-                            onClick = { onArticleClick(article) },
+                            onClick = {
+                                onArticleClick(article)
+                                coroutineScope.launch { bottomSheetState.bottomSheetState.expand() }
+                            },
                         )
                     }
                     if (uiState.isLoadingMore) {

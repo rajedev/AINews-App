@@ -6,6 +6,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.navigation3.runtime.NavEntry
+import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.ui.NavDisplay
 import com.rajedev.ainewsapp.presentation.ui.feed.FeedScreen
@@ -17,7 +18,7 @@ fun AppNavHost(modifier: Modifier = Modifier) {
     NavDisplay(
         backStack = backStack,
         modifier = modifier,
-    ) { key ->
+    ) { key: NavKey ->
         when (key) {
             is Route.Feed -> NavEntry(key) {
                 FeedScreen(
@@ -26,7 +27,13 @@ fun AppNavHost(modifier: Modifier = Modifier) {
                     },
                 )
             }
-            else -> NavEntry(key) {}
+            else -> NavEntry(key) {
+                // Since Route is sealed with only Feed and ArticleDetail values,
+                // and we handle Feed explicitly above, this else branch
+                // effectively handles the ArticleDetail route.
+                // The ArticleDetail route is shown as a bottom sheet in FeedScreen
+                // rather than as a separate navigation destination.
+            }
         }
     }
 }
